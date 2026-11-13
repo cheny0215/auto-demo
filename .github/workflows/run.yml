@@ -4,30 +4,36 @@ on:
   push:
     branches: [ main ]
   schedule:
-    # UTC 每 6 小时跑一次，北京时间 = UTC+8
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Run Python script
+      - name: Run script
         run: python3 demo.py
 
-      - name: Commit & Push changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json index.html
-          git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 auto update $(date)" && git push)
+      # 这里不再把文件 push 回 main！
+      # 改成：交给官方 pages action 打包上传发布
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
